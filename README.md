@@ -20,11 +20,13 @@ Introduction
 In the era of modern Android app development, Jetpack Compose has revolutionized the way we create user interfaces. Yet, efficiently managing storage, whether it's working with shared preferences, internal storage, or external storage, is a fundamental aspect of app development. This project was created to help developers understand and implement storage-related features using Jetpack Compose.
 
 Features
+
 Shared Preferences: Learn how to use the SharedPreferences API to store key-value pairs persistently.
 Internal Storage: Discover how to store files and data on the device's internal storage.
 External Storage: Explore techniques for managing and accessing data on external storage, such as the SD card.
 Data Serialization: Understand how to serialize and deserialize data when saving and retrieving it from storage.
 UI Integration: See how to seamlessly integrate storage operations with Jetpack Compose user interfaces.
+
 Getting Started
 To get started with this project, follow these steps:
 
