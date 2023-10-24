@@ -1,5 +1,6 @@
 package com.raveline.concord.navigation
 
+import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -79,10 +80,48 @@ fun NavGraphBuilder.messageListScreen(
                 if (uri != null) {
                     context.showMessage(message = "Selected Uri: $uri")
                     context.showLog(tag = TAG, message = "Selected Uri: $uri")
+                    viewModelMessage.loadMediaInScreen(uri.toString())
                 } else {
                     context.showLog(TAG, "No media selected")
                 }
             }
+
+            /*
+            * Get the file's content URI from the incoming Intent,
+            * then query the server app to get the file's display name
+            * and size.
+            */
+            val pickedFile =
+                rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument())
+                { uri ->
+                    if (uri != null) {
+                        val name = context.contentResolver.query(
+                            uri, null, null, null, null
+                        ).use { cursor ->
+                            val nameIndex = cursor?.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                            cursor?.moveToFirst()
+                            nameIndex?.let {
+                                cursor.getString(it)
+                            }
+                        }
+
+                        val size = context.contentResolver.query(
+                            uri, null, null, null, null
+                        ).use { cursor ->
+                            val sizeIndex = cursor?.getColumnIndex(OpenableColumns.SIZE)
+                            cursor?.moveToFirst()
+                            sizeIndex?.let {
+                                cursor.getInt(it)
+                            }
+                        }
+
+                        uiState.onMessageValueChange("$name\nFile Size:$size")
+                        viewModelMessage.loadMediaInScreen(uri.toString())
+                        viewModelMessage.sendMessage()
+                    } else {
+                        context.showLog(TAG, "No media selected")
+                    }
+                }
 
             if (uiState.showBottomSheetFile) {
                 ModalBottomSheetFile(
@@ -93,6 +132,7 @@ fun NavGraphBuilder.messageListScreen(
                         viewModelMessage.setShowBottomSheetFile(false)
                     },
                     onSelectFile = {
+                        pickedFile.launch(arrayOf("*/*"))
                         viewModelMessage.setShowBottomSheetFile(false)
                     }, onBack = {
                         viewModelMessage.setShowBottomSheetFile(false)
