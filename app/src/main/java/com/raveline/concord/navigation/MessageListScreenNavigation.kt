@@ -92,10 +92,15 @@ fun NavGraphBuilder.messageListScreen(
                 }
 
                 requestPermissionLauncher.launch(permission)
-                getAllImages(context)
 
                 val stickerList = mutableStateListOf<String>()
+                getAllImages(context) {
+                    it.map { pairValue ->
+                        stickerList.add(pairValue.second)
+                    }
+                }
 
+                //Gets all external stickers from the path on the device
                 context.getExternalFilesDir("stickers")?.listFiles()?.forEach { file ->
                     stickerList.add(file.path)
                 }
@@ -183,8 +188,13 @@ fun NavGraphBuilder.messageListScreen(
     }
 }
 
-private fun getAllImages(context: Context) {
-    val projection = null
+private fun getAllImages(context: Context, onLoadImages: (List<Pair<String, String>>) -> Unit) {
+    val pairImagePath = mutableListOf<Pair<String, String>>()
+    val projection = arrayOf(
+        MediaStore.Images.Media.DISPLAY_NAME,
+        MediaStore.Images.Media.DATA,
+        MediaStore.Images.Media.SIZE
+    )
     val selection = null
     val selectionArgs = null
     val sortOrder = null
@@ -196,11 +206,24 @@ private fun getAllImages(context: Context) {
         selectionArgs,
         sortOrder
     )?.use { cursor ->
-        context.showLog(TAG, "Total images: ${cursor.count}")
+
         while (cursor.moveToNext()) {
             // Use an ID column from the projection to get
             // a URI representing the media item itself.
+            val nameIndex: Int = cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME)
+            val pathIndex: Int = cursor.getColumnIndex(MediaStore.Images.Media.DATA)
+            val sizeIndex: Int = cursor.getColumnIndex(MediaStore.Images.Media.SIZE)
+
+            val name = cursor.getString(nameIndex)
+            val path = cursor.getString(pathIndex)
+            val fileSize = cursor.getString(sizeIndex)
+
+            context.showLog(TAG, "Name: $name, Path: $path, Size: ${fileSize}Kb")
+
+            pairImagePath.add(Pair(name, path))
         }
+
+        onLoadImages(pairImagePath)
     }
 
 }
@@ -220,7 +243,7 @@ internal fun NavHostController.navigateToMessageScreen(
     navigate("$messageChatRoute/$chatId", navOptions)
 }
 
-private fun ignoreIt(){
+private fun ignoreIt() {
 
     arrayOf("*/*") // Lista tudo
     arrayOf("image/*") // Lista todas imagens
