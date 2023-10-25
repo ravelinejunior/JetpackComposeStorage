@@ -1,5 +1,11 @@
 package com.raveline.concord.navigation
 
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
 import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -55,7 +61,39 @@ fun NavGraphBuilder.messageListScreen(
                 }
             )
 
+            // Requesting permission
+            // Register the permissions callback, which handles the user's response to the
+            // system permissions dialog. Save the return value, an instance of
+            // ActivityResultLauncher. You can use either a val, as shown in this snippet,
+            // or a lateinit var in your onAttach() or onCreate() method.
+            val requestPermissionLauncher =
+                rememberLauncherForActivityResult(
+                    ActivityResultContracts.RequestPermission()
+                ) { isGranted: Boolean ->
+                    if (isGranted) {
+                        // Permission is granted. Continue the action or workflow in your app.
+                        context.showMessage("Permission Granted Successfully!")
+                    } else {
+                        // Explain to the user that the feature is unavailable because the
+                        // feature requires a permission that the user has denied. At the
+                        // same time, respect the user's decision. Don't link to system
+                        // settings in an effort to convince the user to change their
+                        // decision.
+                        context.showMessage("Permission NOT Granted Successfully!")
+                    }
+                }
+
             if (uiState.showBottomSheetSticker) {
+
+                val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    Manifest.permission.READ_MEDIA_IMAGES
+                } else {
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                }
+
+                requestPermissionLauncher.launch(permission)
+                getAllImages(context)
+
                 val stickerList = mutableStateListOf<String>()
 
                 context.getExternalFilesDir("stickers")?.listFiles()?.forEach { file ->
@@ -78,9 +116,9 @@ fun NavGraphBuilder.messageListScreen(
                 ActivityResultContracts.PickVisualMedia()
             ) { uri ->
                 if (uri != null) {
-                    context.showMessage(message = "Selected Uri: $uri")
-                    context.showLog(tag = TAG, message = "Selected Uri: $uri")
+                    persistAccessFile(context, uri)
                     viewModelMessage.loadMediaInScreen(uri.toString())
+                    context.showLog(tag = TAG, message = "Selected Uri: $uri")
                 } else {
                     context.showLog(TAG, "No media selected")
                 }
@@ -95,6 +133,9 @@ fun NavGraphBuilder.messageListScreen(
                 rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument())
                 { uri ->
                     if (uri != null) {
+
+                        persistAccessFile(context, uri)
+
                         val name = context.contentResolver.query(
                             uri, null, null, null, null
                         ).use { cursor ->
@@ -142,11 +183,60 @@ fun NavGraphBuilder.messageListScreen(
     }
 }
 
+private fun getAllImages(context: Context) {
+    val projection = null
+    val selection = null
+    val selectionArgs = null
+    val sortOrder = null
+
+    context.contentResolver.query(
+        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+        projection,
+        selection,
+        selectionArgs,
+        sortOrder
+    )?.use { cursor ->
+        context.showLog(TAG, "Total images: ${cursor.count}")
+        while (cursor.moveToNext()) {
+            // Use an ID column from the projection to get
+            // a URI representing the media item itself.
+        }
+    }
+
+}
+
+private fun persistAccessFile(context: Context, uri: Uri) {
+    val contentResolver = context.contentResolver
+    val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION
+    // Check for the freshest data.
+    contentResolver.takePersistableUriPermission(uri, takeFlags)
+}
+
 
 internal fun NavHostController.navigateToMessageScreen(
     chatId: Long,
     navOptions: NavOptions? = null
 ) {
     navigate("$messageChatRoute/$chatId", navOptions)
+}
+
+private fun ignoreIt(){
+
+    arrayOf("*/*") // Lista tudo
+    arrayOf("image/*") // Lista todas imagens
+    arrayOf("image/jpeg") // Lista todas imagens com extensão jpeg / jpg
+    arrayOf("video/*") // Todos vídeos
+    arrayOf("video/mp4") // Todos vídeos MP4
+    arrayOf("audio/*") // Todos áudios
+    arrayOf("audio/*") // Todos videos MP3
+    arrayOf("application/*") // Tudo que é Imagem, Video ou Audio
+    arrayOf("application/pdf") // Todos arquivos do tipo PDF
+
+    arrayOf(
+        "image/png",
+        "video/mp4",
+        "text/*"
+    ) // Busca todas imagens .png, todos videos .mp4 e todos arquivos de texto simples
+
 }
 
