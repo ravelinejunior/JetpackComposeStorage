@@ -36,6 +36,8 @@ class SecurityAppActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        cryptoDecryptManager.generateAndStoreCertificate(this)
+
         setContent {
             ConcordTheme {
                 var messageToEncrypt by remember {

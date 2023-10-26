@@ -1,18 +1,29 @@
 package com.raveline.concord.security
 
+import android.content.Context
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import androidx.annotation.RequiresApi
+import com.raveline.concord.R
 import com.raveline.concord.util.androidKeyStoreKey
-import com.raveline.concord.util.secretStoreKey
+import com.raveline.concord.util.secretStoreKeyAlias
+import com.raveline.concord.util.testStoreKeyAlias
 import java.io.InputStream
 import java.io.OutputStream
+import java.security.KeyPairGenerator
 import java.security.KeyStore
+import java.security.cert.CertificateFactory
+import java.security.cert.X509Certificate
+import java.util.Calendar
+import java.util.Date
+import java.util.GregorianCalendar
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.IvParameterSpec
+import javax.security.auth.x500.X500Principal
+
 
 @RequiresApi(Build.VERSION_CODES.M)
 class KeyEncryptDecryptManager {
@@ -36,7 +47,7 @@ class KeyEncryptDecryptManager {
 
     //A secret (symmetric) key. The purpose of this interface is to group (and provide type safety for) all secret key interfaces
     private fun getKey(): SecretKey {
-        val existingKey = keyStore.getEntry(secretStoreKey, null) as? KeyStore.SecretKeyEntry
+        val existingKey = keyStore.getEntry(secretStoreKeyAlias, null) as? KeyStore.SecretKeyEntry
         return existingKey?.secretKey ?: createKey()
     }
 
@@ -44,7 +55,7 @@ class KeyEncryptDecryptManager {
         KeyGenerator.getInstance(ALGORITHM).apply {
             init(
                 KeyGenParameterSpec.Builder(
-                    secretStoreKey,
+                    secretStoreKeyAlias,
                     KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
                 )
                     .setBlockModes(BLOCK_MODE)
@@ -78,6 +89,84 @@ class KeyEncryptDecryptManager {
 
             getDecryptCipherForInitializationVector(iv).doFinal(encryptedBytes)
         }
+
+    fun generateAndStoreCertificate(context: Context) {
+        try {
+            // Generate a new key pair (public-private key)
+            val keyPairGenerator = KeyPairGenerator.getInstance(
+                KeyProperties.KEY_ALGORITHM_RSA, androidKeyStoreKey
+            )
+
+            val keyGenParameterSpec = KeyGenParameterSpec.Builder(
+                testStoreKeyAlias, KeyProperties.PURPOSE_SIGN
+            ).setDigests(KeyProperties.DIGEST_SHA256)
+                .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
+                .setCertificateSubject(X500Principal("CN=GTS CA 1C3"))
+                .setCertificateNotBefore(Date())
+                .setCertificateNotAfter(getFutureDate(365)) // Valid for 1 year
+                .build()
+
+            keyPairGenerator.initialize(keyGenParameterSpec)
+            val keyPair = keyPairGenerator.genKeyPair()
+
+            // Retrieve the certificate from the Keystore
+            val keyStore = KeyStore.getInstance(androidKeyStoreKey)
+            keyStore.load(null)
+
+            val certificate = keyStore.getCertificate(testStoreKeyAlias)
+
+            if (certificate != null) {
+                val x509Certificate = certificate as X509Certificate
+                // You can use x509Certificate for further operations
+                println("Generated Certificate:")
+                println("Public Key: " + x509Certificate.publicKey.algorithm)
+                println("Subject: " + x509Certificate.subjectDN)
+                println("Issuer: " + x509Certificate.issuerDN)
+                println("Serial Number: " + x509Certificate.serialNumber)
+                println("Not Before: " + x509Certificate.notBefore)
+                println("Not After: " + x509Certificate.notAfter)
+                println("Key pair private: " + keyPair.private.encoded)
+                println("Key pair public: " + keyPair.public.encoded)
+
+                println("Certificate generated and stored successfully.")
+
+                // Usage
+                val resourceId = R.raw.mycertificate  // Replace with your certificate's resource ID
+                val certificated = loadCertificateFromResource(resourceId,context)
+
+                if (certificated != null) {
+                    // Use the certificate here
+                    println("Certificate Subject: ${certificate.subjectDN}")
+                } else {
+                    System.err.println("Failed to load the certificate.")
+                }
+
+            } else {
+                System.err.println("Failed to generate and store the certificate.")
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun getFutureDate(days: Int): Date {
+        val calendar = GregorianCalendar()
+        calendar.add(Calendar.DAY_OF_YEAR, days)
+        return calendar.time
+    }
+
+    private fun loadCertificateFromResource(resourceId: Int, context: Context): X509Certificate? {
+        var certificate: X509Certificate? = null
+        try {
+            val certificateFactory = CertificateFactory.getInstance("X.509")
+            val inputStream: InputStream = context.resources.openRawResource(resourceId)
+            certificate = certificateFactory.generateCertificate(inputStream) as X509Certificate
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return certificate
+    }
+
 
     companion object {
         private const val ALGORITHM = KeyProperties.KEY_ALGORITHM_AES

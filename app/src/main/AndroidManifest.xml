@@ -19,7 +19,7 @@
         android:theme="@style/Theme.Concord"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name=".security.SecurityAppActivity"
             android:exported="true"
             android:theme="@style/Theme.Concord"
             android:windowSoftInputMode="adjustResize">
