@@ -3,6 +3,7 @@ package com.raveline.concord.security
 import android.content.Context
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyInfo
 import android.security.keystore.KeyProperties
 import androidx.annotation.RequiresApi
 import com.raveline.concord.R
@@ -15,12 +16,14 @@ import java.security.KeyPairGenerator
 import java.security.KeyStore
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
+import java.security.spec.InvalidKeySpecException
 import java.util.Calendar
 import java.util.Date
 import java.util.GregorianCalendar
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
+import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.IvParameterSpec
 import javax.security.auth.x500.X500Principal
 
@@ -39,6 +42,7 @@ class KeyEncryptDecryptManager {
     private val encryptCipher = Cipher.getInstance(TRANSFORMATION).apply {
         init(Cipher.ENCRYPT_MODE, getKey())
     }
+
 
     private fun getDecryptCipherForInitializationVector(iv: ByteArray): Cipher =
         Cipher.getInstance(TRANSFORMATION).apply {
@@ -66,7 +70,7 @@ class KeyEncryptDecryptManager {
             )
         }.generateKey()
 
-    fun encrypt(byteArray: ByteArray, outputStream: OutputStream): ByteArray {
+    fun encrypt(byteArray: ByteArray, outputStream: OutputStream, context: Context): ByteArray {
         val encryptedBytes = encryptCipher.doFinal(byteArray)
         outputStream.use {
             it.write(encryptCipher.iv.size)
@@ -74,10 +78,15 @@ class KeyEncryptDecryptManager {
             it.write(encryptedBytes.size)
             it.write(encryptedBytes)
         }
+
+        showKeyInfo()
+
+        generateAndStoreCertificate(context)
+
         return encryptedBytes
     }
 
-    fun decrypt(inputStream: InputStream): ByteArray =
+    fun decrypt(inputStream: InputStream, context: Context): ByteArray =
         inputStream.use {
             val ivSize = it.read()
             val iv = ByteArray(ivSize)
@@ -86,6 +95,10 @@ class KeyEncryptDecryptManager {
             val encryptedBytesSize = it.read()
             val encryptedBytes = ByteArray(encryptedBytesSize)
             it.read(encryptedBytes)
+
+            generateAndStoreCertificate(context)
+
+            showKeyInfo()
 
             getDecryptCipherForInitializationVector(iv).doFinal(encryptedBytes)
         }
@@ -130,9 +143,11 @@ class KeyEncryptDecryptManager {
 
                 println("Certificate generated and stored successfully.")
 
+                showKeyInfo()
+
                 // Usage
                 val resourceId = R.raw.mycertificate  // Replace with your certificate's resource ID
-                val certificated = loadCertificateFromResource(resourceId,context)
+                val certificated = loadCertificateFromResource(resourceId, context)
 
                 if (certificated != null) {
                     // Use the certificate here
@@ -167,6 +182,22 @@ class KeyEncryptDecryptManager {
         return certificate
     }
 
+    private fun showKeyInfo() {
+        val factory = SecretKeyFactory.getInstance(getKey().algorithm, androidKeyStoreKey)
+        val keyInfo: KeyInfo
+        try {
+            keyInfo = factory.getKeySpec(getKey(), KeyInfo::class.java) as KeyInfo
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                println("KeyInfo security level: ${keyInfo.securityLevel}")
+            } else {
+                println("KeyInfo security level under 29: ${keyInfo.isInsideSecureHardware}")
+            }
+        } catch (e: InvalidKeySpecException) {
+            // Not an Android KeyStore key.
+            System.err.println(" Not an Android KeyStore key.")
+
+        }
+    }
 
     companion object {
         private const val ALGORITHM = KeyProperties.KEY_ALGORITHM_AES

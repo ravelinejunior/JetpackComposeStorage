@@ -78,7 +78,8 @@ class SecurityAppActivity : ComponentActivity() {
 
                             messageToDecrypt = cryptoDecryptManager.encrypt(
                                 byteArray = bytes,
-                                outputStream = fos
+                                outputStream = fos,
+                                this@SecurityAppActivity
                             ).decodeToString()
 
 
@@ -89,7 +90,8 @@ class SecurityAppActivity : ComponentActivity() {
                         Button(onClick = {
                             val file = File(filesDir, "secrets.txt")
                             messageToEncrypt = cryptoDecryptManager.decrypt(
-                                inputStream = FileInputStream(file)
+                                inputStream = FileInputStream(file),
+                                this@SecurityAppActivity
                             ).decodeToString()
 
                         }) {
