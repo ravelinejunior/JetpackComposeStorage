@@ -1,12 +1,15 @@
 package com.raveline.concord.navigation
 
 import android.Manifest
+import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.provider.OpenableColumns
+import android.util.Size
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -93,7 +96,7 @@ fun NavGraphBuilder.messageListScreen(
 
                 requestPermissionLauncher.launch(permission)
 
-                val stickerList = mutableStateListOf<String>()
+                val stickerList = mutableStateListOf<Long>()
                 getAllImages(context) {
                     it.map { pairValue ->
                         stickerList.add(pairValue.second)
@@ -101,9 +104,9 @@ fun NavGraphBuilder.messageListScreen(
                 }
 
                 //Gets all external stickers from the path on the device
-                context.getExternalFilesDir("stickers")?.listFiles()?.forEach { file ->
+                /*context.getExternalFilesDir("stickers")?.listFiles()?.forEach { file ->
                     stickerList.add(file.path)
-                }
+                }*/
 
                 ModalBottomSheetSticker(
                     stickerList = stickerList,
@@ -188,9 +191,9 @@ fun NavGraphBuilder.messageListScreen(
     }
 }
 
-private fun getAllImages(context: Context, onLoadImages: (List<Pair<String, String>>) -> Unit) {
-    val pairImagePath = mutableListOf<Pair<String, String>>()
-    val projection = arrayOf(
+private fun getAllImages(context: Context, onLoadImages: (List<Pair<String, Long>>) -> Unit) {
+    val pairImagePath = mutableListOf<Pair<String, Long>>()
+    /*val projection = arrayOf(
         MediaStore.Images.Media.DISPLAY_NAME,
         MediaStore.Images.Media.DATA,
         MediaStore.Images.Media.SIZE
@@ -199,8 +202,12 @@ private fun getAllImages(context: Context, onLoadImages: (List<Pair<String, Stri
     val selection =
         "${MediaStore.Images.Media.DATA} LIKE '%/Download/stickers/%' AND ${MediaStore.Images.Media.SIZE} < ?"
 
-    val sortOrder = "${MediaStore.Images.Media.DISPLAY_NAME} DESC"
-    val selectionArgs = arrayOf("120000")
+    val sortOrder = "${MediaStore.Images.Media.DISPLAY_NAME} ASC"
+    val selectionArgs = arrayOf("120000")*/
+    val projection = arrayOf(MediaStore.Images.Media.DISPLAY_NAME, MediaStore.Images.Media._ID)
+    val selection = null
+    val sortOrder = "${MediaStore.Images.Media.DATE_MODIFIED} DESC"
+    val selectionArgs = null
 
     context.contentResolver.query(
         MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
@@ -213,22 +220,56 @@ private fun getAllImages(context: Context, onLoadImages: (List<Pair<String, Stri
         while (cursor.moveToNext()) {
             // Use an ID column from the projection to get
             // a URI representing the media item itself.
-            val nameIndex: Int = cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME)
+            /*val nameIndex: Int = cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME)
             val pathIndex: Int = cursor.getColumnIndex(MediaStore.Images.Media.DATA)
             val sizeIndex: Int = cursor.getColumnIndex(MediaStore.Images.Media.SIZE)
 
             val name = cursor.getString(nameIndex)
             val path = cursor.getString(pathIndex)
             val fileSize = cursor.getString(sizeIndex)
+*/
+            //context.showLog(TAG, "Name: $name, Path: $path, Size: ${fileSize}Kb")
 
-            context.showLog(TAG, "Name: $name, Path: $path, Size: ${fileSize}Kb")
+            val nameIndex: Int = cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME)
+            val name = cursor.getString(nameIndex)
+            val idIndex: Int = cursor.getColumnIndex(MediaStore.Images.Media._ID)
+            val imageId: Long = cursor.getLong(idIndex)
 
-            pairImagePath.add(Pair(name, path))
+
+            //pairImagePath.add(Pair(name, path))
+            pairImagePath.add(Pair(name, imageId))
         }
 
         onLoadImages(pairImagePath)
     }
 
+}
+
+fun getURIById(fileId: Long): Uri =
+    ContentUris.withAppendedId(
+        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+        fileId
+    )
+
+fun Context.getThumbnailById(imageId: Long): Bitmap {
+    val thumbnail: Bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        contentResolver.loadThumbnail(
+            ContentUris.withAppendedId(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                imageId
+            ),
+            Size(300, 300),
+            null
+        )
+    } else {
+        MediaStore.Images.Thumbnails.getThumbnail(
+            contentResolver,
+            imageId,
+            MediaStore.Images.Thumbnails.MINI_KIND,
+            null
+        )
+    }
+    return thumbnail
 }
 
 private fun persistAccessFile(context: Context, uri: Uri) {
