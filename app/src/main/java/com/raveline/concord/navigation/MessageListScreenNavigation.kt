@@ -195,9 +195,12 @@ private fun getAllImages(context: Context, onLoadImages: (List<Pair<String, Stri
         MediaStore.Images.Media.DATA,
         MediaStore.Images.Media.SIZE
     )
-    val selection = null
-    val selectionArgs = null
-    val sortOrder = null
+
+    val selection =
+        "${MediaStore.Images.Media.DATA} LIKE '%/Download/stickers/%' AND ${MediaStore.Images.Media.SIZE} < ?"
+
+    val sortOrder = "${MediaStore.Images.Media.DISPLAY_NAME} DESC"
+    val selectionArgs = arrayOf("120000")
 
     context.contentResolver.query(
         MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
