@@ -1,12 +1,12 @@
-package com.raveline.concord.database
+package com.raveline.concord.database.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy.Companion.REPLACE
 import androidx.room.Query
 import androidx.room.Transaction
-import com.raveline.concord.data.Chat
-import com.raveline.concord.data.ChatWithLastMessage
+import com.raveline.concord.database.entity.Chat
+import com.raveline.concord.database.entity.ChatWithLastMessage
 import kotlinx.coroutines.flow.Flow
 
 @Dao

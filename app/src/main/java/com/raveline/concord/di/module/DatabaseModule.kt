@@ -2,9 +2,10 @@ package com.raveline.concord.di.module
 
 import android.content.Context
 import androidx.room.Room
-import com.raveline.concord.database.ChatDao
+import com.raveline.concord.database.dao.ChatDao
 import com.raveline.concord.database.ConcordDatabase
-import com.raveline.concord.database.MessageDao
+import com.raveline.concord.database.dao.DownloadableFileDao
+import com.raveline.concord.database.dao.MessageDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -39,4 +40,10 @@ class DatabaseModule {
     fun provideMessageDao(db: ConcordDatabase): MessageDao {
         return db.messageDao()
     }
+
+    @Provides
+    fun provideDownloadableFileDao(db: ConcordDatabase): DownloadableFileDao {
+        return db.downloadableFileDao()
+    }
+
 }

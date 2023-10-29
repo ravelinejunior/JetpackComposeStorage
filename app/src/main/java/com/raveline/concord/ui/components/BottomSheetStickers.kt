@@ -19,8 +19,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.raveline.concord.R
+import com.raveline.concord.media.getURIById
 import com.raveline.concord.navigation.getThumbnailById
-import com.raveline.concord.navigation.getURIById
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,7 +94,7 @@ private fun BottomSheetStickers(
                             .align(Alignment.Center),
                         contentScale = ContentScale.Inside,
                         model = context.getThumbnailById(item),
-                        placeholder = painterResource(R.drawable.image_place_holder),
+                        placeholder = painterResource(R.drawable.ic_document),
                         error = painterResource(R.drawable.image_place_holder),
                         contentDescription = null,
                     )

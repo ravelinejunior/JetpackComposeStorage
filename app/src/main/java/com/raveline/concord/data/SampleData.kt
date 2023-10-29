@@ -1,37 +1,40 @@
 package com.raveline.concord.data
 
 import androidx.compose.ui.tooling.preview.datasource.LoremIpsum
+import com.raveline.concord.database.entity.Author
+import com.raveline.concord.database.entity.Chat
+import com.raveline.concord.database.entity.MessageEntity
 import com.raveline.concord.util.getRandomDate
 
 val messageListSample = mutableListOf(
-    Message(
+    MessageEntity(
         id = 3L,
         chatId = 3L,
         content = "Olá",
         author = Author.USER,
         date = getRandomDate(),
     ),
-    Message(
+    MessageEntity(
         id = 3L,
         chatId = 3L,
         content = LoremIpsum(2).values.first(),
         author = Author.OTHER,
         date = getRandomDate()
     ),
-    Message(
+    MessageEntity(
         id = 3L,
         chatId = 3L,
         content = LoremIpsum(13).values.first(),
         author = Author.USER,
         date = getRandomDate(),
     ),
-    Message(
+    MessageEntity(
         id = 3L,
         chatId = 3L,
         content = LoremIpsum(14).values.last(),
         author = Author.OTHER,
     ),
-    Message(
+    MessageEntity(
         id = 3L,
         chatId = 3L,
         content = LoremIpsum(8).values.first(),
@@ -39,7 +42,7 @@ val messageListSample = mutableListOf(
         date = getRandomDate(),
         mediaLink = "/data/user/0/com.alura.concord/app_temImages/94f077ed-a81f-4a74-ac5b-6e44130e80b1"
     ),
-    Message(
+    MessageEntity(
         id = 3L,
         chatId = 3L,
         content = LoremIpsum(13).values.first(),
@@ -47,7 +50,7 @@ val messageListSample = mutableListOf(
         date = getRandomDate(),
         mediaLink = "/storage/emulated/0/Download/imagem.jpg"
     ),
-    Message(
+    MessageEntity(
         id = 3L,
         chatId = 3L,
         content = LoremIpsum(1).values.first(),
@@ -55,42 +58,42 @@ val messageListSample = mutableListOf(
         date = getRandomDate(),
         mediaLink = "content://media/external/images/media/94"
     ),
-    Message(
+    MessageEntity(
         id = 3L,
         chatId = 3L,
         content = LoremIpsum(7).values.first(),
         author = Author.OTHER,
         mediaLink = "/storage/self/primary/Android/data/com.raveline.concord/images/four.jpeg"
     ),
-    Message(
+    MessageEntity(
         id = 3L,
         chatId = 3L,
         content = LoremIpsum(7).values.first(),
         author = Author.OTHER,
         mediaLink = "/storage/self/primary/Android/data/com.raveline.concord/images/three.jpeg"
     ),
-    Message(
+    MessageEntity(
         id = 3L,
         chatId = 3L,
         content = LoremIpsum(7).values.first(),
         author = Author.OTHER,
         mediaLink = "/storage/self/primary/Android/data/com.raveline.concord/images/two.jpeg"
     ),
-    Message(
+    MessageEntity(
         id = 3L,
         chatId = 3L,
         content = LoremIpsum(7).values.first(),
         author = Author.USER,
         mediaLink = "/storage/self/primary/Android/data/com.raveline.concord/images/image_one.jpeg"
     ),
-    Message(
+    MessageEntity(
         id = 3L,
         chatId = 3L,
         content = LoremIpsum(7).values.first(),
         author = Author.USER,
         mediaLink = "/storage/self/primary/Android/data/com.raveline.concord/images/WhatsApp Image 2023-10-23 at 11.00.43.jpeg"
     ),
-    Message(
+    MessageEntity(
         id = 3L,
         chatId = 3L,
         content = LoremIpsum(7).values.first(),

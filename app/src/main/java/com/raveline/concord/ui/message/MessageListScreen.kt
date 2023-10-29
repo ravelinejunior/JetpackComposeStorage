@@ -34,8 +34,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.raveline.concord.R
-import com.raveline.concord.data.Author
+import com.raveline.concord.data.MessageWithFile
 import com.raveline.concord.data.messageListSample
+import com.raveline.concord.database.entity.Author
+import com.raveline.concord.database.entity.toMessageFile
 import com.raveline.concord.ui.components.*
 
 @Composable
@@ -47,6 +49,8 @@ fun MessageScreen(
     onShowSelectorStickers: () -> Unit = {},
     onDeselectMedia: () -> Unit = {},
     onBack: () -> Unit = {},
+    onContentDownload: (MessageWithFile) -> Unit = {},
+    onShowFileOptions: (MessageWithFile) -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -66,17 +70,26 @@ fun MessageScreen(
                     .padding(horizontal = 16.dp)
                     .weight(8f), reverseLayout = true
             ) {
-                items(state.messages.reversed(), contentType = { it.author }) { it ->
-                    when (it.author) {
+
+                items(state.messages.reversed(), contentType = { it.author }) { message ->
+
+                    when (message.author) {
                         Author.OTHER -> {
-                            MessageItemOther(it)
+                            MessageItemOther(
+                                message = message,
+                                onContentDownload = {
+                                    onContentDownload(message)
+                                },
+                                onShowFileOptions = {
+                                    onShowFileOptions(message)
+                                },
+                            )
                         }
 
                         Author.USER -> {
-                            MessageItemUser(it)
+                            MessageItemUser(message)
                         }
                     }
-
                 }
             }
             Spacer(modifier = Modifier.height(4.dp))
@@ -101,7 +114,10 @@ private fun SelectedMediaContainer(
     state: MessageListUiState,
     onDeselectMedia: () -> Unit,
 ) {
-    Divider(Modifier.height(0.4.dp).alpha(0.5f), color = MaterialTheme.colorScheme.outline)
+    Divider(
+        Modifier
+            .height(0.4.dp)
+            .alpha(0.5f), color = MaterialTheme.colorScheme.outline)
     Box(
         contentAlignment = Alignment.BottomEnd,
         modifier = Modifier
@@ -109,7 +125,10 @@ private fun SelectedMediaContainer(
             .background(MaterialTheme.colorScheme.onPrimaryContainer),
     ) {
         AsyncImage(
-            modifier = Modifier.size(150.dp).padding(8.dp).clip(RoundedCornerShape(5)),
+            modifier = Modifier
+                .size(150.dp)
+                .padding(8.dp)
+                .clip(RoundedCornerShape(5)),
             imageUrl = state.mediaInSelection
         )
         IconButton(
@@ -125,7 +144,8 @@ private fun SelectedMediaContainer(
                 .background(
                     Color.Black,
                     CircleShape
-                ).size(22.dp),
+                )
+                .size(22.dp),
         ) {
             Icon(
                 Icons.Default.Close,
@@ -145,9 +165,11 @@ fun AppBarChatScreen(
     TopAppBar(
         navigationIcon = {
             Row(
-                modifier = Modifier.fillMaxHeight().clickable {
-                    onBackClick()
-                },
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .clickable {
+                        onBackClick()
+                    },
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
@@ -288,7 +310,7 @@ private fun EntryTextBar(
             val iconSize by transition.animateDp(label = "Icon size") { if (it) 24.dp else 24.dp }
             val iconAlpha by transition.animateFloat(label = "Icon alpha") { if (it) 1f else 1f }
 
-            Crossfade(targetState = hasContentToSend) { hasContent ->
+            Crossfade(targetState = hasContentToSend, label = "") { hasContent ->
                 Icon(
                     if (hasContent) sendIcon else micIcon,
                     stringResource(R.string.icon_message_or_mic),
@@ -308,7 +330,8 @@ private fun EntryTextBar(
 fun ChatScreenPreview() {
     MessageScreen(
         MessageListUiState(
-            messages = messageListSample,
+            ownerName = "Albert Einstein",
+            messages = messageListSample.map { it.toMessageFile() },
         )
     )
 }

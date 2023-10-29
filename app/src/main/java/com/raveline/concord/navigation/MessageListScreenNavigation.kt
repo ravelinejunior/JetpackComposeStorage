@@ -24,6 +24,7 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import com.raveline.concord.extensions.showLog
 import com.raveline.concord.extensions.showMessage
+import com.raveline.concord.ui.components.ModalBottomShareSheet
 import com.raveline.concord.ui.components.ModalBottomSheetFile
 import com.raveline.concord.ui.components.ModalBottomSheetSticker
 import com.raveline.concord.ui.message.MessageListViewModel
@@ -61,6 +62,18 @@ fun NavGraphBuilder.messageListScreen(
                 },
                 onBack = {
                     onBack()
+                },
+                onContentDownload = { message ->
+                    if (viewModelMessage.downloadInProgress()) {
+                        viewModelMessage.startDownload(message)
+                    } else {
+                        context.showMessage(
+                            "Aguarde o download terminar para baixar outro arquivo", true
+                        )
+                    }
+                },
+                onShowFileOptions = { selectedMessage ->
+                    viewModelMessage.setShowFileOptions(selectedMessage.id, true)
                 }
             )
 
@@ -187,6 +200,25 @@ fun NavGraphBuilder.messageListScreen(
                         viewModelMessage.setShowBottomSheetFile(false)
                     })
             }
+
+            if (uiState.showBottomShareSheet) {
+                val mediaToOpen = uiState.selectedMessage.mediaLink
+
+                ModalBottomShareSheet(
+                    onOpenWith = {
+
+                    },
+                    onShare = {
+
+                    },
+                    onSave = {
+
+                    },
+                    onBack = {
+                        viewModelMessage.setShowBottomShareSheet(false)
+                    }
+                )
+            }
         }
     }
 }
@@ -194,16 +226,16 @@ fun NavGraphBuilder.messageListScreen(
 private fun getAllImages(context: Context, onLoadImages: (List<Pair<String, Long>>) -> Unit) {
     val pairImagePath = mutableListOf<Pair<String, Long>>()
     /*val projection = arrayOf(
-        MediaStore.Images.Media.DISPLAY_NAME,
-        MediaStore.Images.Media.DATA,
-        MediaStore.Images.Media.SIZE
-    )
+    MediaStore.Images.Media.DISPLAY_NAME,
+    MediaStore.Images.Media.DATA,
+    MediaStore.Images.Media.SIZE
+)
 
-    val selection =
-        "${MediaStore.Images.Media.DATA} LIKE '%/Download/stickers/%' AND ${MediaStore.Images.Media.SIZE} < ?"
+val selection =
+    "${MediaStore.Images.Media.DATA} LIKE '%/Download/stickers/%' AND ${MediaStore.Images.Media.SIZE} < ?"
 
-    val sortOrder = "${MediaStore.Images.Media.DISPLAY_NAME} ASC"
-    val selectionArgs = arrayOf("120000")*/
+val sortOrder = "${MediaStore.Images.Media.DISPLAY_NAME} ASC"
+val selectionArgs = arrayOf("120000")*/
     val projection = arrayOf(MediaStore.Images.Media.DISPLAY_NAME, MediaStore.Images.Media._ID)
     val selection = null
     val sortOrder = "${MediaStore.Images.Media.DATE_MODIFIED} DESC"
@@ -221,12 +253,12 @@ private fun getAllImages(context: Context, onLoadImages: (List<Pair<String, Long
             // Use an ID column from the projection to get
             // a URI representing the media item itself.
             /*val nameIndex: Int = cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME)
-            val pathIndex: Int = cursor.getColumnIndex(MediaStore.Images.Media.DATA)
-            val sizeIndex: Int = cursor.getColumnIndex(MediaStore.Images.Media.SIZE)
+        val pathIndex: Int = cursor.getColumnIndex(MediaStore.Images.Media.DATA)
+        val sizeIndex: Int = cursor.getColumnIndex(MediaStore.Images.Media.SIZE)
 
-            val name = cursor.getString(nameIndex)
-            val path = cursor.getString(pathIndex)
-            val fileSize = cursor.getString(sizeIndex)
+        val name = cursor.getString(nameIndex)
+        val path = cursor.getString(pathIndex)
+        val fileSize = cursor.getString(sizeIndex)
 */
             //context.showLog(TAG, "Name: $name, Path: $path, Size: ${fileSize}Kb")
 

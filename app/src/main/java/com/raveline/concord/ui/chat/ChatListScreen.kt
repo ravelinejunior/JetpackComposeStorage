@@ -23,7 +23,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.raveline.concord.R
-import com.raveline.concord.data.Chat
+import com.raveline.concord.database.entity.Chat
 import com.raveline.concord.data.chatListSample
 import com.raveline.concord.ui.components.AsyncImage
 import com.raveline.concord.ui.theme.ConcordTheme

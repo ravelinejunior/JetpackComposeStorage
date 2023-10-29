@@ -1,4 +1,4 @@
-package com.raveline.concord.data
+package com.raveline.concord.database.entity
 
 import androidx.room.Embedded
 import androidx.room.Entity

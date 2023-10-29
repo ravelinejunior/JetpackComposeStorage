@@ -2,8 +2,8 @@ package com.raveline.concord.ui.chat
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.raveline.concord.data.Chat
-import com.raveline.concord.database.ChatDao
+import com.raveline.concord.database.entity.Chat
+import com.raveline.concord.database.dao.ChatDao
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
