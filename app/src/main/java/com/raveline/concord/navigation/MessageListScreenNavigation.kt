@@ -18,17 +18,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import com.raveline.concord.extensions.showLog
 import com.raveline.concord.extensions.showMessage
+import com.raveline.concord.media.getAllImages
 import com.raveline.concord.ui.components.ModalBottomShareSheet
 import com.raveline.concord.ui.components.ModalBottomSheetFile
 import com.raveline.concord.ui.components.ModalBottomSheetSticker
 import com.raveline.concord.ui.message.MessageListViewModel
 import com.raveline.concord.ui.message.MessageScreen
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.launch
 
 val TAG: String = "MessageListScreenNavigationTAG"
 internal const val messageChatRoute = "messages"
@@ -110,9 +114,12 @@ fun NavGraphBuilder.messageListScreen(
                 requestPermissionLauncher.launch(permission)
 
                 val stickerList = mutableStateListOf<Long>()
-                getAllImages(context) {
-                    it.map { pairValue ->
-                        stickerList.add(pairValue.second)
+
+                viewModelMessage.viewModelScope.launch(IO) {
+                    context.getAllImages {
+                        it.map { pairValue ->
+                            stickerList.add(pairValue.second)
+                        }
                     }
                 }
 
