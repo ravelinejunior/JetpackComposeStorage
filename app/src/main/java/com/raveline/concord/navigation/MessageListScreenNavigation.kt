@@ -16,9 +16,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
@@ -26,6 +26,7 @@ import androidx.navigation.compose.composable
 import com.raveline.concord.extensions.showLog
 import com.raveline.concord.extensions.showMessage
 import com.raveline.concord.media.getAllImages
+import com.raveline.concord.network.DownloadServices.makeDownloadByUrl
 import com.raveline.concord.ui.components.ModalBottomShareSheet
 import com.raveline.concord.ui.components.ModalBottomSheetFile
 import com.raveline.concord.ui.components.ModalBottomSheetSticker
@@ -48,7 +49,7 @@ fun NavGraphBuilder.messageListScreen(
         backStackEntry.arguments?.getString(messageChatIdArgument)?.let { chatId ->
             val viewModelMessage = hiltViewModel<MessageListViewModel>()
             val uiState by viewModelMessage.uiState.collectAsState()
-
+            val scope = rememberCoroutineScope()
 
             MessageScreen(
                 state = uiState,
@@ -68,6 +69,14 @@ fun NavGraphBuilder.messageListScreen(
                     onBack()
                 },
                 onContentDownload = { message ->
+
+                    val testUrl =
+                        "https://thechive.com/wp-content/uploads/2023/10/88466321-c85e-4ed0-9724-dd73b2b900bb.jpg?attachment_cache_bust=4522444&quality=85&strip=info&w=650"
+
+                    scope.launch {
+                        makeDownloadByUrl(testUrl, context)
+                    }
+
                     if (viewModelMessage.downloadInProgress()) {
                         viewModelMessage.startDownload(message)
                     } else {
@@ -115,7 +124,7 @@ fun NavGraphBuilder.messageListScreen(
 
                 val stickerList = mutableStateListOf<Long>()
 
-                viewModelMessage.viewModelScope.launch(IO) {
+                scope.launch(IO) {
                     context.getAllImages {
                         it.map { pairValue ->
                             stickerList.add(pairValue.second)
