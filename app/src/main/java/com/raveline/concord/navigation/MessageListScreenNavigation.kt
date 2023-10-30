@@ -27,12 +27,13 @@ import com.raveline.concord.extensions.showLog
 import com.raveline.concord.extensions.showMessage
 import com.raveline.concord.media.getAllImages
 import com.raveline.concord.network.DownloadServices.makeDownloadByUrl
+import com.raveline.concord.permission.imagePermission
+import com.raveline.concord.permission.verifyPermission
 import com.raveline.concord.ui.components.ModalBottomShareSheet
 import com.raveline.concord.ui.components.ModalBottomSheetFile
 import com.raveline.concord.ui.components.ModalBottomSheetSticker
 import com.raveline.concord.ui.message.MessageListViewModel
 import com.raveline.concord.ui.message.MessageScreen
-import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 
 val TAG: String = "MessageListScreenNavigationTAG"
@@ -51,6 +52,24 @@ fun NavGraphBuilder.messageListScreen(
             val uiState by viewModelMessage.uiState.collectAsState()
             val scope = rememberCoroutineScope()
 
+
+            // Requesting permission
+            // Register the permissions callback, which handles the user's response to the
+            // system permissions dialog. Save the return value, an instance of
+            // ActivityResultLauncher. You can use either a val, as shown in this snippet,
+            // or a lateinit var in your onAttach() or onCreate() method.
+            val requestPermissionLauncher =
+                rememberLauncherForActivityResult(
+                    ActivityResultContracts.RequestPermission()
+                ) { isGranted: Boolean ->
+                    if (isGranted) {
+                        viewModelMessage.setShowBottomSheetSticker(true)
+                    } else {
+                        context.showMessage("Permission NOT Granted Successfully!")
+                    }
+                }
+
+
             MessageScreen(
                 state = uiState,
                 onSendMessage = {
@@ -60,7 +79,11 @@ fun NavGraphBuilder.messageListScreen(
                     viewModelMessage.setShowBottomSheetFile(true)
                 },
                 onShowSelectorStickers = {
-                    viewModelMessage.setShowBottomSheetSticker(true)
+                    if (context.verifyPermission(imagePermission())) {
+                        requestPermissionLauncher.launch(imagePermission())
+                    } else {
+                        viewModelMessage.setShowBottomSheetSticker(true)
+                    }
                 },
                 onDeselectMedia = {
                     viewModelMessage.deselectMedia()
@@ -81,7 +104,7 @@ fun NavGraphBuilder.messageListScreen(
                         viewModelMessage.startDownload(message)
                     } else {
                         context.showMessage(
-                            "Aguarde o download terminar para baixar outro arquivo", true
+                            "Wait download finish", true
                         )
                     }
                 },
@@ -89,28 +112,6 @@ fun NavGraphBuilder.messageListScreen(
                     viewModelMessage.setShowFileOptions(selectedMessage.id, true)
                 }
             )
-
-            // Requesting permission
-            // Register the permissions callback, which handles the user's response to the
-            // system permissions dialog. Save the return value, an instance of
-            // ActivityResultLauncher. You can use either a val, as shown in this snippet,
-            // or a lateinit var in your onAttach() or onCreate() method.
-            val requestPermissionLauncher =
-                rememberLauncherForActivityResult(
-                    ActivityResultContracts.RequestPermission()
-                ) { isGranted: Boolean ->
-                    if (isGranted) {
-                        // Permission is granted. Continue the action or workflow in your app.
-                        context.showMessage("Permission Granted Successfully!")
-                    } else {
-                        // Explain to the user that the feature is unavailable because the
-                        // feature requires a permission that the user has denied. At the
-                        // same time, respect the user's decision. Don't link to system
-                        // settings in an effort to convince the user to change their
-                        // decision.
-                        context.showMessage("Permission NOT Granted Successfully!")
-                    }
-                }
 
             if (uiState.showBottomSheetSticker) {
 
@@ -124,7 +125,7 @@ fun NavGraphBuilder.messageListScreen(
 
                 val stickerList = mutableStateListOf<Long>()
 
-                scope.launch(IO) {
+                scope.launch {
                     context.getAllImages {
                         it.map { pairValue ->
                             stickerList.add(pairValue.second)
